@@ -43,7 +43,7 @@ const Speaking = ({ preloadedSet = null, onSubmitGuest = null }) => {
   );
 
   useEffect(() => {
-    if (preloadedSet) { setLoading(false); return; } // guest: data already provided
+    if (preloadedSet) return; // guest: data already provided, loading already false via useState(!preloadedSet)
     const fetchSpeaking = async () => {
       try {
         setLoading(true);

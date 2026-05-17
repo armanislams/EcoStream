@@ -65,7 +65,7 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
 
   /* --- Fetch Data --- */
   useEffect(() => {
-    if (preloadedSet) { setLoading(false); return; } // guest: data already provided
+    if (preloadedSet) return; // guest: data already provided, loading already false via useState(!preloadedSet)
     const fetchListening = async () => {
       try {
         setLoading(true);
@@ -81,14 +81,14 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
     if (user?.email) fetchListening();
   }, [axiosSecure, user?.email, preloadedSet]);
 
-  // Countdown Logic
+  // Countdown Logic — uses activeSet (works for both guests with preloadedSet and authenticated users)
   useEffect(() => {
-    if (!selectedSetId || submitted || timeLeft <= 0) return;
+    if (!activeSet || submitted || timeLeft <= 0) return;
     const timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [selectedSetId, submitted, timeLeft]);
+  }, [activeSet, submitted, timeLeft]);
 
   const fmtCountdown = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -243,7 +243,10 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
       <div className="bg-slate-950 text-white sticky top-0 z-50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-                <button onClick={() => setSelectedSetId("")} className="btn btn-ghost btn-circle btn-sm text-white/40">
+                <button
+                    onClick={() => preloadedSet ? navigate(-1) : setSelectedSetId("")}
+                    className="btn btn-ghost btn-circle btn-sm text-white/40"
+                >
                     <PiArrowLeftBold className="w-5 h-5" />
                 </button>
                 <div>
@@ -272,7 +275,7 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
                     className="card bg-slate-950 text-white p-8 rounded-[3rem] shadow-2xl overflow-hidden relative"
                 >
                     {/* background glow */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
 
                     <div className="relative z-10 space-y-6">
                         {/* Title row */}
@@ -355,11 +358,15 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
                             </div>
                         </div>
 
-                        {!isLoaded && (
+                        {!activeSet?.audioUrl ? (
+                            <p className="text-[11px] text-amber-400/80 font-bold text-center">
+                                ⚠ No audio URL configured for this test.
+                            </p>
+                        ) : !isLoaded ? (
                             <p className="text-[11px] text-white/30 font-bold text-center animate-pulse">
                                 Loading audio...
                             </p>
-                        )}
+                        ) : null}
                     </div>
                 </motion.div>
                 {/* ─────────────────────────────────────────────────────── */}
@@ -369,10 +376,10 @@ const Listening = ({ preloadedSet = null, onSubmitGuest = null }) => {
                     <motion.div 
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="card bg-gradient-to-br from-indigo-600 to-primary p-10 rounded-[3rem] text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8"
+                        className="card bg-linear-to-br from-indigo-600 to-primary p-10 rounded-[3rem] text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8"
                     >
                         <div className="flex items-center gap-8">
-                            <div className="w-24 h-24 rounded-[2rem] bg-white/10 backdrop-blur-xl flex flex-col items-center justify-center border border-white/20">
+                            <div className="w-24 h-24 rounded-4xl bg-white/10 backdrop-blur-xl flex flex-col items-center justify-center border border-white/20">
                                 <span className="text-3xl font-black">{result.score}%</span>
                                 <span className="text-[8px] font-black uppercase tracking-widest text-white/50">Score</span>
                             </div>
